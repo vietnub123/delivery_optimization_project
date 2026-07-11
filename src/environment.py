@@ -82,4 +82,4 @@ class DeliveryEnvironment:
         }
 
 # Khởi tạo thể hiện của môi trường và kích hoạt biên dịch
-# env = DeliveryEnvironment('locations.csv', 'time_windows.csv').execute_pipeline()
+env = DeliveryEnvironment('locations.csv', 'time_windows.csv').execute_pipeline()
