@@ -61,25 +61,61 @@ class DeliveryEnvironment:
         self.time_windows.dropna(subset=['start_min', 'end_min'], inplace=True)
         
     def get_node_attributes(self, location_id: int):
-        """Truy xuất vector đặc trưng của một nút trạng thái (Customer/Depot)."""
-        node_data = self.locations[self.locations['location_id'] == location_id].iloc[0]
-        demand = node_data['demand_kg']
-        service_time = node_data.get('service_time', 0.0)
-        
-        # Lọc các tập hợp không gian thời gian hợp lệ cho nút theo từng ngày
-        node_tw = self.time_windows[self.time_windows['location_id'] == location_id]
-        time_windows_dict = {}
-        for _, row in node_tw.iterrows():
-            day = int(row['day_of_week'])
-            if day not in time_windows_dict:
-                time_windows_dict[day] = []
-            time_windows_dict[day].append((row['start_min'], row['end_min']))
+            """Truy xuất vector đặc trưng của một nút trạng thái trong không gian mạng lưới."""
             
-        return {
-            'demand_kg': demand,
-            'service_time': service_time,
-            'allowed_time_windows': time_windows_dict
-        }
+            # 1. Pha nội suy kiểu dữ liệu (Polymorphic Mapping)
+            if isinstance(location_id, int):
+                if location_id == 0:
+                    location_id = 'DEPOT'
+                else:
+                    # Định dạng số nguyên thành chuỗi định danh (VD: 1 -> 'C001')
+                    location_id = f"C{location_id:03d}"
+                    
+            # 2. Trích xuất không gian con (Subset) từ ma trận vị trí
+            subset = self.locations[self.locations['location_id'] == location_id]
+            
+            # 3. Kiểm định tính toàn vẹn của tập hợp
+            if subset.empty:
+                raise ValueError(f"Không gian metric từ chối định danh: '{location_id}' không tồn tại.")
+                
+            # 4. Trích xuất các tham số vô hướng (Scalar parameters)
+            node_data = subset.iloc[0]
+            demand = node_data['demand_kg']
+            service_time = node_data.get('service_time', 0.0)
+            
+            # 5. Xây dựng ma trận giới hạn thời gian (Time-Window Matrix)
+            node_tw = self.time_windows[self.time_windows['location_id'] == location_id]
+            time_windows_dict = {}
+            
+            for _, row in node_tw.iterrows():
+                day = int(row['day_of_week'])
+                if day not in time_windows_dict:
+                    time_windows_dict[day] = []
+                time_windows_dict[day].append((row['start_min'], row['end_min']))
+                
+            # 6. Kết xuất vector trạng thái tổng hợp (Dictionary Payload)
+            return {
+                'demand_kg': demand,
+                'service_time': service_time,
+                'allowed_time_windows': time_windows_dict
+            }
 
 # Khởi tạo thể hiện của môi trường và kích hoạt biên dịch
-env = DeliveryEnvironment('locations.csv', 'time_windows.csv').execute_pipeline()
+# ... (Phần định nghĩa class DeliveryEnvironment giữ nguyên) ...
+
+# Đoạn mã dưới đây thay thế cho dòng 85 bị lỗi trong src/environment.py
+if __name__ == "__main__":
+    from pathlib import Path
+    
+    # 1. Nội suy tọa độ thư mục gốc (lùi 2 cấp từ src/environment.py -> src -> project_root)
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    
+    # 2. Xây dựng vector đường dẫn tĩnh đến phân vùng dữ liệu
+    loc_file = BASE_DIR / 'data' / 'locations.csv'
+    tw_file = BASE_DIR / 'data' / 'time_windows.csv'
+    
+    print("Khởi chạy kiểm thử độc lập phân hệ Tiền xử lý...")
+    
+    # 3. Ép kiểu String để truyền vào hàm khởi tạo
+    env = DeliveryEnvironment(str(loc_file), str(tw_file)).execute_pipeline()
+    print("Đã tải môi trường dữ liệu thành công.")

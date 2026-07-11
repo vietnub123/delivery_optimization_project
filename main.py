@@ -1,5 +1,15 @@
 import os
 import pandas as pd
+import sys
+from pathlib import Path
+
+# Xác lập tọa độ gốc của dự án (project root) một cách nội hàm
+BASE_DIR = Path(__file__).resolve().parent
+
+# Cập nhật không gian biến môi trường sys.path để nạp các phân hệ từ 'src'
+src_path = BASE_DIR / "src"
+sys.path.append(str(src_path))
+
 from environment import DeliveryEnvironment
 from baselines import BaselineHeuristics
 from solver import ALNSOptimizer
@@ -12,12 +22,14 @@ def main():
     Quy trình vận hành tuân thủ nguyên lý tuyến tính qua 5 pha tổ hợp.
     """
     # 1. Khởi tạo Không gian Môi trường và Tiền xử lý (Pha 1)
-    loc_file = os.path.join('data', 'locations.csv')
-    tw_file = os.path.join('data', 'time_windows.csv')
+    # Ràng buộc đường dẫn dữ liệu sử dụng cấu trúc Path nội suy tuyệt đối
+    loc_file = BASE_DIR / 'data' / 'locations.csv'
+    tw_file = BASE_DIR / 'data' / 'time_windows.csv'
     
     print("[1/5] Biên dịch không gian hệ tọa độ và ma trận thời gian...")
     try:
-        env = DeliveryEnvironment(loc_file, tw_file).execute_pipeline()
+        # Chuyển đổi định dạng Path sang kiểu String để đảm bảo tương thích hàm IO
+        env = DeliveryEnvironment(str(loc_file), str(tw_file)).execute_pipeline()
     except FileNotFoundError:
         print("Lỗi: Không tìm thấy tệp dữ liệu. Vui lòng kiểm tra lại đường dẫn thư mục 'data/'.")
         return
