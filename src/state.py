@@ -1,6 +1,7 @@
 import copy
 from alns import State
 import numpy as np
+from tqdm import tqdm
 
 class DeliveryState(State):
     def __init__(self, routes: dict, unassigned: list, env):
@@ -26,12 +27,22 @@ class DeliveryState(State):
         """
         Ghi đè phương thức copy. Bắt buộc đối với thuật toán ALNS để lưu trữ các nghiệm lân cận 
         mà không làm biến đổi không gian trạng thái gốc.
-        """
+        
         # Sử dụng deepcopy cho routes để tránh tham chiếu bộ nhớ
+        """
         return DeliveryState(copy.deepcopy(self.routes), 
                              self.unassigned.copy(), 
                              self.env)
-
+        
+        # Chỉ copy những gì cần thiết: routes và unassigned
+        #shallowcopy 
+        """
+        # Không copy env vì env là tĩnh, không thay đổi
+        new_state = DeliveryState(routes=self.routes.copy(), 
+                                unassigned=self.unassigned.copy(), 
+                                env=self.env)
+        return new_state
+        """
     def objective(self) -> float:
         """
         Hàm định lượng chi phí F(x) của toàn bộ hệ thống.
@@ -52,6 +63,7 @@ class DeliveryState(State):
             current_time = 0.0
             
             for next_node in route:
+                if next_node is None: continue # THÊM DÒNG NÀY
                 # 1. Tích phân chi phí khoảng cách và thời gian di chuyển
                 total_distance += self.env.distance_matrix[current_node][next_node]
                 current_time += self.env.travel_time_matrix[current_node][next_node]

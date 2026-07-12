@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 from state import DeliveryState
 
 class BaselineHeuristics:
@@ -19,10 +20,13 @@ class BaselineHeuristics:
     def nearest_neighbor(self) -> DeliveryState:
         """
         Chiến lược Tham lam Khoảng cách (Nearest Neighbor).
-        Phân bổ quỹ đạo dựa trên việc cực tiểu hóa khoảng cách Euclid D_{ij}.
+        Phân bổ quỹ đạo dựa trên việc cực tiểu hóa khoảng cách Euclid.
         """
         state = self._generate_empty_state()
         unassigned = set(state.unassigned)
+        
+        # --- THAY ĐỔI: Khởi tạo thanh tiến trình dựa trên tổng số nút ---
+        pbar = tqdm(total=len(unassigned), desc="[Pha 3] Nearest Neighbor", unit="node")
         
         for day in range(1, 8):
             current_node = 0
@@ -67,22 +71,27 @@ class BaselineHeuristics:
                 state.unassigned.remove(best_node)
                 unassigned.remove(best_node)
                 
+                # --- THAY ĐỔI: Cập nhật bước tiến trên thanh tiến trình ---
+                pbar.update(1)
+                
                 # Tiến vi phân thời gian: t = t + T_{ij} + Wait_{j} + S_{j}
                 node_attrs = self.env.get_node_attributes(best_node)
                 current_time += self.env.travel_time_matrix[current_node][best_node] + \
                                 best_wait + node_attrs['service_time']
                 current_node = best_node
                 
+        # --- THAY ĐỔI: Đóng thanh tiến trình để giải phóng bộ nhớ ---
+        pbar.close()
         return state
 
     def earliest_due_date(self) -> DeliveryState:
         """
         Chiến lược Tham lam Thời gian (Earliest Due Date).
-        Phân bổ dựa trên điểm kỳ dị cận trên (l_i) của khung thời gian.
+        Phân bổ dựa trên điểm kỳ dị cận trên của khung thời gian.
         """
         state = self._generate_empty_state()
         
-        # Thiết lập vector lưu trữ cận trên l_i cực tiểu của mỗi nút
+        # Thiết lập vector lưu trữ cận trên cực tiểu của mỗi nút
         node_deadlines = []
         for node in state.unassigned:
             attrs = self.env.get_node_attributes(node)
@@ -94,12 +103,12 @@ class BaselineHeuristics:
                         min_end_time = end
             node_deadlines.append((node, min_end_time))
             
-        # Sắp xếp không gian nút ưu tiên theo l_i tăng dần
+        # Sắp xếp không gian nút ưu tiên theo giới hạn thời gian tăng dần
         node_deadlines.sort(key=lambda x: x[1])
         sorted_nodes = [x[0] for x in node_deadlines]
         
-        # Chèn định tuyến tuần tự
-        for node in sorted_nodes:
+        # --- THAY ĐỔI: Bọc vòng lặp for bằng đối tượng tqdm ---
+        for node in tqdm(sorted_nodes, desc="[Pha 3] Earliest Due Date", unit="node"):
             attrs = self.env.get_node_attributes(node)
             
             for day in sorted(attrs['allowed_time_windows'].keys()):

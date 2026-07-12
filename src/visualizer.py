@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 import matplotlib.cm as cm
 import numpy as np
 from state import DeliveryState
@@ -43,6 +45,17 @@ class Visualizer:
             
             # Tích hợp vector di chuyển tuần tự
             for node in route:
+                node = f"C{node:03d}"
+                tqdm.write(f"Đang xử lý node ID: {node} | Kiểu dữ liệu: {type(node)}") # <-- Dòng này cực quan trọng
+                                
+                subset = self.locations[self.locations['location_id'] == node]
+                
+                # Kiểm tra xem nó có tìm thấy gì không
+                if subset.empty:
+                    tqdm.write(f"LỖI: Node {node} không tồn tại trong danh sách location_id")
+                    continue
+                
+                
                 node_data = self.locations[self.locations['location_id'] == node].iloc[0]
                 x_coords.append(node_data['x_km'])
                 y_coords.append(node_data['y_km'])
