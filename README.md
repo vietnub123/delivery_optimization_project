@@ -35,3 +35,12 @@ delivery_optimization_project/
 │   └── visualizer.py          # Ánh xạ đồ thị topo đa chu kỳ lên mặt phẳng 2D
 ├── main.py                    # Trình điều phối trung tâm (Entry Point)
 └── README.md                  # Tài liệu đặc tả kỹ thuật
+
+
+## 3. Tiền xử lý dữ liệu với `src/environment.py`
+Thực thi tập lệnh `src/environment.py` để khởi tạo quy trình đọc dữ liệu đầu vào và chuyển đổi chúng sang các cấu trúc dữ liệu cần thiết cho thuật toán.
+
+## 4. Thực thi hệ thống với `main.py`
+Khởi chạy `main.py` để bắt đầu quá trình mô phỏng hoặc tính toán. 
+
+* **Điều chỉnh tham số:** Để thay đổi số lần duyệt node (node traversal iterations), truy cập vào file `main.py` và cập nhật giá trị tại biến cấu hình tương ứng trong pha 4. Việc tăng hoặc giảm giá trị này sẽ ảnh hưởng trực tiếp đến độ hội tụ và độ chính xác của kết quả đầu ra.

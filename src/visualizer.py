@@ -32,13 +32,15 @@ class Visualizer:
         
         # Khởi tạo hàm phân phối dải màu sắc quang phổ cho 7 chu kỳ không gian - thời gian
         colors = cm.rainbow(np.linspace(0, 1, 7))
-        
+
         for day, route in state.routes.items():
+            day_idx = int(day)
             if not route:
+                tqdm.write(f"Thông báo: Chu kỳ k={day_idx} trống (Không có đơn hàng phân bổ).")
                 continue
-                
-            color = colors[day - 1]
-            
+
+            color = colors[day_idx - 1]
+
             # Khởi tạo ma trận tọa độ hạt nhân từ Kho trung tâm
             x_coords = [self.depot['x_km']]
             y_coords = [self.depot['y_km']]
@@ -65,8 +67,8 @@ class Visualizer:
             y_coords.append(self.depot['y_km'])
             
             # Thiết lập phương trình đường thẳng nối các điểm nút
-            plt.plot(x_coords, y_coords, color=color, linewidth=1.5, 
-                     marker='.', markersize=8, alpha=0.8, label=f'Chu kỳ $k={day}$')
+            plt.plot(x_coords, y_coords, color=color, linewidth=1, 
+                     marker='.', markersize=8, alpha=0.8, label=f'Chu kỳ $k={day_idx}$')
             
             # Tính toán đạo hàm định hướng để vẽ vector hướng (arrow)
             for i in range(len(x_coords) - 1):

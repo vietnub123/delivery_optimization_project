@@ -43,7 +43,7 @@ def main():
 
     # 3. Tối ưu hóa Toàn cục bằng ALNS (Pha 4)
     # Khởi tạo ALNS với nghiệm cơ sở từ EDD (giảm thiểu vi phạm khung thời gian)
-    iterations = 1000
+    iterations = 50
     print(f"[3/5] Kích hoạt động cơ Meta-heuristic (ALNS) với {iterations} chu kỳ lặp...")
     optimizer = ALNSOptimizer(seed=42)
     best_alns_state = optimizer.optimize(initial_state=state_edd, iterations=iterations)
