@@ -33,8 +33,9 @@ delivery_optimization_project/
 │   ├── baselines.py           # Thuật toán sinh nghiệm cơ sở (Nearest Neighbor, Earliest Due Date)
 │   ├── evaluator.py           # Nội suy và định lượng các tham số thống kê (Benchmarking)
 │   └── visualizer.py          # Ánh xạ đồ thị topo đa chu kỳ lên mặt phẳng 2D
-├── main.py                    # Trình điều phối trung tâm (Entry Point)
+├── main.py                    # Trình điều phối trung tâm (Entry  Point)
 └── README.md                  # Tài liệu đặc tả kỹ thuật
+'''
 
 ## 3. Tiền xử lý dữ liệu với `src/environment.py`
 Thực thi tập lệnh `src/environment.py` để khởi tạo quy trình đọc dữ liệu đầu vào và chuyển đổi chúng sang các cấu trúc dữ liệu cần thiết cho thuật toán.
