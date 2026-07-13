@@ -62,7 +62,7 @@ def main():
         export_solution(state_edd, str(edd_file))
 
         # 3. Tối ưu hóa Toàn cục bằng ALNS (Pha 4)
-        iterations = 5
+        iterations = 1000
         print(f"[3/5] Kích hoạt động cơ Meta-heuristic (ALNS) với {iterations} chu kỳ lặp...")
         optimizer = ALNSOptimizer(seed=42)
         best_alns_state = optimizer.optimize(initial_state=state_edd, iterations=iterations)
