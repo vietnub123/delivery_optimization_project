@@ -220,7 +220,7 @@ def main():
     print("[*] Khởi tạo Hệ thống Phân tích Đối chứng (Benchmarking Engine)...")
     
     # --- ĐƯỜNG DẪN DỮ LIỆU TÙY CHỈNH (Điều chỉnh nếu cần) ---
-    DATA_DIR = Path('./data')
+    DATA_DIR = Path('./tests/test4')
     LOCATIONS_FILE = DATA_DIR / 'locations.csv'
     TIME_WINDOWS_FILE = DATA_DIR / 'time_windows.csv'
     
@@ -323,7 +323,11 @@ def main():
     depot_y = analyzer.loc_dict[analyzer.depot_id]['y_km']
 
     algorithms = ['NN', 'EDD', 'ALNS']
-    colors = plt.cm.tab10.colors  # Phân phối màu sắc theo hàm băm cơ số 10
+
+    
+    gamma = 1
+    colors = [(r * gamma, g * gamma, b * gamma, a) for r, g, b, a in plt.cm.rainbow(np.linspace(0, 1, 7))]
+
 
     for algo in algorithms:
         data = solutions.get(algo)
