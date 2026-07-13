@@ -48,7 +48,7 @@ class Visualizer:
             # Tích hợp vector di chuyển tuần tự
             for node in route:
                 node = f"C{node:03d}"
-                tqdm.write(f"Đang xử lý node ID: {node} | Kiểu dữ liệu: {type(node)}") # <-- Dòng này cực quan trọng
+                #tqdm.write(f"Đang xử lý node ID: {node} | Kiểu dữ liệu: {type(node)}") # <-- Dòng này cực quan trọng
                                 
                 subset = self.locations[self.locations['location_id'] == node]
                 

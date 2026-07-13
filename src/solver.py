@@ -45,7 +45,7 @@ class ALNSOptimizer:
         Thực thi không gian tìm kiếm lân cận.
         """
         for i in range(iterations):
-    # --- ĐẶT PRINT: Theo dõi vòng lặp ---
+            # --- ĐẶT PRINT: Theo dõi vòng lặp ---
             if i % 50 == 0: # Chỉ in mỗi 50 vòng để đỡ lag
                 tqdm.write(f"Đang chạy iter thứ: {i}")
         # 1. Cơ chế Chọn lọc (Roulette Wheel Selection)
@@ -72,6 +72,12 @@ class ALNSOptimizer:
 
         # 4. Kích hoạt chu trình tìm kiếm (Loại bỏ mảng callbacks ngoại vi)
         result = self.alns.iterate(initial_state, select, accept, stop_criterion)
+        
+        best_state = result.best_state
+
+        # BỔ SUNG: Gắn lịch sử hội tụ vào state để xuất ra JSON
+        # history là danh sách giá trị Cost tại mỗi iteration
+        best_state.convergence_history = result.statistics.objectives
         
         # 5. Giải phóng tài nguyên bộ đệm
         pbar.close()

@@ -17,11 +17,11 @@ class DeliveryState(State):
         self.env = env
         
         # Hệ số phạt (Hyperparameters)
-        self.PENALTY_UNASSIGNED = 1e6      # Phạt cực nặng nếu không giao được hàng
-        self.PENALTY_DELAY_PER_DAY = 5000  # Phạt dời lịch giao (tuyến tính)
-        self.PENALTY_TW_VIOLATION = 1e5    # Phạt nếu vi phạm nghiêm trọng giới hạn thời gian
-        self.WEIGHT_DISTANCE = 1.0         # Trọng số cho tổng quãng đường
-        self.WEIGHT_WAIT_TIME = 0.5        # Trọng số cho tổng thời gian chờ đợi (phút)
+        self.PENALTY_UNASSIGNED = 1e5      # Phạt cực nặng nếu không giao được hàng /đơn
+        self.PENALTY_DELAY_PER_DAY = 100  # Phạt dời lịch giao (tuyến tính) /đơn
+        self.PENALTY_TW_VIOLATION = 50   # Phạt nếu vi phạm nghiêm trọng giới hạn thời gian /phút
+        self.WEIGHT_DISTANCE = 1.0         # Trọng số cho tổng quãng đường /km
+        self.WEIGHT_WAIT_TIME = 0.3        # Trọng số cho tổng thời gian chờ đợi (phút)
 
     def copy(self):
         """
@@ -51,7 +51,9 @@ class DeliveryState(State):
         total_distance = 0.0
         total_wait_time = 0.0
         total_delay_penalty = 0.0
-        tw_violations = 0
+        
+        # [SỬA ĐỔI] Đổi từ biến đếm số lượng sang biến lưu tổng tiền phạt
+        total_tw_penalty_cost = 0.0 
 
         # Mô phỏng quỹ đạo không gian - thời gian cho từng chu kỳ ngày
         for day, route in self.routes.items():
@@ -63,7 +65,7 @@ class DeliveryState(State):
             current_time = 0.0
             
             for next_node in route:
-                if next_node is None: continue # THÊM DÒNG NÀY
+                if next_node is None: continue
                 # 1. Tích phân chi phí khoảng cách và thời gian di chuyển
                 total_distance += self.env.distance_matrix[current_node][next_node]
                 current_time += self.env.travel_time_matrix[current_node][next_node]
@@ -73,12 +75,11 @@ class DeliveryState(State):
                 allowed_tws = node_attrs['allowed_time_windows'].get(day, [])
                 
                 if not allowed_tws:
-                    # Lỗi nghiêm trọng: Khách hàng không nhận hàng vào ngày này
-                    tw_violations += 1
+                    # [SỬA ĐỔI] Khách không nhận hàng ngày này -> Phạt ngang với rớt đơn (Big M)
+                    total_tw_penalty_cost += self.PENALTY_UNASSIGNED
                     continue
                 
                 # Tìm khung thời gian phù hợp nhất (sắp xếp theo start_time)
-                # Xử lý trường hợp đa khung thời gian trong cùng 1 ngày
                 valid_tw_found = False
                 for (start_min, end_min) in sorted(allowed_tws):
                     if current_time <= end_min:
@@ -91,14 +92,23 @@ class DeliveryState(State):
                         break # Đã chốt được khung thời gian hợp lệ
                 
                 if not valid_tw_found:
-                    # Trễ toàn bộ các khung thời gian trong ngày
-                    tw_violations += 1
+                    # [SỬA ĐỔI] Xử lý Phạt Lũy tiến (Exponential Penalty) khi đến trễ
+                    # Lấy khung thời gian muộn nhất trong ngày làm mốc
+                    last_end_min = sorted(allowed_tws)[-1][1]
+                    minutes_late = current_time - last_end_min
+                    
+                    # Trễ 10 phút -> Hệ số x1
+                    # Trễ 60 phút -> Hệ số x36
+                    # Trễ 120 phút -> Hệ số x144
+                    penalty_multiplier = (minutes_late / 10.0) ** 2
+                    
+                    # Cộng dồn tiền phạt vào tổng
+                    total_tw_penalty_cost += self.PENALTY_TW_VIOLATION * penalty_multiplier
                 
                 # 3. Tính toán thời gian phục vụ (Service Time)
                 current_time += node_attrs['service_time']
                 
                 # 4. Tính toán hệ số phạt Delay (dời lịch)
-                # Giả định: đơn hàng ưu tiên giao vào ngày có time window sớm nhất trong tuần
                 earliest_possible_day = min(node_attrs['allowed_time_windows'].keys())
                 if day > earliest_possible_day:
                     total_delay_penalty += (day - earliest_possible_day) * self.PENALTY_DELAY_PER_DAY
@@ -112,11 +122,11 @@ class DeliveryState(State):
         # 6. Tích hợp Chi phí Phạt đối với Khách hàng chưa được phục vụ
         unassigned_penalty = len(self.unassigned) * self.PENALTY_UNASSIGNED
 
-        # Phương trình Hội tụ Cost
+        # [SỬA ĐỔI] Phương trình Hội tụ Cost sử dụng tổng tiền phạt đa thức
         F_x = (total_distance * self.WEIGHT_DISTANCE) + \
               (total_wait_time * self.WEIGHT_WAIT_TIME) + \
               total_delay_penalty + \
-              (tw_violations * self.PENALTY_TW_VIOLATION) + \
+              total_tw_penalty_cost + \
               unassigned_penalty
 
         return F_x

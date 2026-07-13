@@ -1,6 +1,7 @@
 # Tệp: src/io_manager.py
 import json
 import numpy as np
+from src import state
 from src.state import DeliveryState
 
 def export_solution(state: DeliveryState, filepath: str = "best_solution.json"):
@@ -14,10 +15,21 @@ def export_solution(state: DeliveryState, filepath: str = "best_solution.json"):
         
     safe_unassigned = [int(node) if isinstance(node, (int, np.integer)) else str(node) for node in state.unassigned]
     
+    raw_history = getattr(state, 'convergence_history', [])
+
+    # Nếu là numpy array, chuyển thành Python list
+    if isinstance(raw_history, np.ndarray):
+        safe_history = raw_history.tolist()
+    else:
+        # Ép kiểu từng phần tử bên trong thành float chuẩn để an toàn tuyệt đối
+        safe_history = [float(x) for x in raw_history]
+    # -------------------------------------
+    
     payload = {
         "objective_cost": state.objective(),
         "routes": safe_routes,
-        "unassigned": safe_unassigned
+        "unassigned": safe_unassigned,
+        "history": safe_history
     }
     
     with open(filepath, 'w', encoding='utf-8') as f:
