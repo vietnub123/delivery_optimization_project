@@ -18,14 +18,14 @@ $$F(S) = \sum (C_{dist} + C_{wait} + C_{delay} + C_{tw} + C_{overtime}) + M \cdo
 
 * **Chi phí Khoảng cách ($C_{dist}$ - Trọng số 1.0):** Tổn hao nhiên liệu và khấu hao phương tiện.
 * **Chi phí Chờ đợi ($C_{wait}$ - Trọng số 0.3):** Hao phí quỹ lương khi tài xế nhàn rỗi chờ điểm giao mở cửa.
-* **Phạt Dời lịch ($C_{delay}$ - 100 đv/ngày):** Trừng phạt rủi ro lưu kho do dời lịch giao sang ngày sau.
+* **Phạt Dời lịch ($C_{delay}$ - 2000 đv/ngày):** Trừng phạt rủi ro lưu kho do dời lịch giao sang ngày sau.
 * **Phạt Vượt mốc ($C_{overtime}$ - 500 đv/phút):** Trừng phạt khi xe không thể hồi quy về Kho trước mốc giới hạn 24h.
 * **Phạt Rớt đơn ($M \cdot U$ - Trọng số 100,000):** Ràng buộc cứng (Hard Constraint), dập tắt mọi phương án bỏ sót khách hàng.
 
 ### Cải tiến Đột phá: Hàm Phạt Thời gian Lũy tiến (Exponential Penalty)
 Để mô phỏng tâm lý khách hàng (trễ 15 phút có thể chấp nhận, trễ 2 tiếng lúc nửa đêm là thảm họa), hệ thống áp dụng hàm phạt cấp số mũ thay vì hàm tuyến tính:
 $$C_{tw} = C \cdot \left( e^{\alpha \cdot \Delta t} - 1 \right)$$
-*(Với $\alpha = 0.05$ và $C = 50$).*
+*(Với $\alpha = 0.05$ và $C = 10$).*
 
 ## 3. Mô hình Hóa Động học Giao thông (TD-VRP)
 Hệ thống loại bỏ hoàn toàn ma trận thời gian tĩnh. Thời gian di chuyển được tính bằng cơ chế **Tích phân từng phần (Piecewise Integration)** để bảo toàn tiên đề dòng chảy FIFO.
