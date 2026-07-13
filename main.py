@@ -27,7 +27,7 @@ def main():
     # --- CỜ ĐIỀU KHIỂN LUỒNG (CONTROL FLAGS) ---
     # Chuyển thành "LOAD" nếu bạn chỉ muốn nạp dữ liệu từ JSON và vẽ đồ thị
     # "OPTIMIZE" để chạy toàn bộ pipeline từ đầu đến cuối (bao gồm cả ALNS)
-    MODE = "LOAD" 
+    MODE = "OPTIMIZE" 
     # =====================================================================
     
     # Thiết lập đường dẫn vector lưu trữ nghiệm tĩnh
@@ -62,7 +62,7 @@ def main():
         export_solution(state_edd, str(edd_file))
 
         # 3. Tối ưu hóa Toàn cục bằng ALNS (Pha 4)
-        iterations = 1000
+        iterations = 5
         print(f"[3/5] Kích hoạt động cơ Meta-heuristic (ALNS) với {iterations} chu kỳ lặp...")
         optimizer = ALNSOptimizer(seed=42)
         best_alns_state = optimizer.optimize(initial_state=state_edd, iterations=iterations)
