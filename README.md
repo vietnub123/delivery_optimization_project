@@ -16,8 +16,8 @@ Hệ thống không tối ưu hóa các con số vô hướng mà tối ưu hóa
 Hàm hội tụ Cost tổng quát được định nghĩa như sau:
 $$F(S) = \sum (C_{dist} + C_{wait} + C_{delay} + C_{tw} + C_{overtime}) + M \cdot U$$
 
-* **Chi phí Khoảng cách ($C_{dist}$ - Trọng số 1.0):** Tổn hao nhiên liệu và khấu hao phương tiện.
-* **Chi phí Chờ đợi ($C_{wait}$ - Trọng số 0.3):** Hao phí quỹ lương khi tài xế nhàn rỗi chờ điểm giao mở cửa.
+* **Chi phí Khoảng cách ($C_{dist}$ - Trọng số 1.0):** Tổn hao nhiên liệu và khấu hao phương tiện /km .
+* **Chi phí Chờ đợi ($C_{wait}$ - Trọng số 0.3):** Hao phí quỹ lương khi tài xế nhàn rỗi chờ điểm giao mở cửa /phút.
 * **Phạt Dời lịch ($C_{delay}$ - 2000 đv/ngày):** Trừng phạt rủi ro lưu kho do dời lịch giao sang ngày sau.
 * **Phạt Vượt mốc ($C_{overtime}$ - 500 đv/phút):** Trừng phạt khi xe không thể hồi quy về Kho trước mốc giới hạn 24h.
 * **Phạt Rớt đơn ($M \cdot U$ - Trọng số 1,000,000):** Ràng buộc cứng (Hard Constraint), dập tắt mọi phương án bỏ sót khách hàng.
