@@ -312,5 +312,70 @@ def main():
         plt.close()
         print("[+] Đã kết xuất đồ thị: macro_benchmarking.png")
 
+    # ==========================================
+    # 4. Trực quan hóa Quỹ đạo Không gian (Spatial Routing Topologies)
+    # Tái cấu trúc thành 3 tệp tin đồ họa độc lập
+    # ==========================================
+    print("[*] Đang nội suy ma trận tọa độ và kết xuất đồ thị hình học riêng biệt...")
+
+    # Trích xuất tọa độ chuẩn của Điểm gốc (Depot)
+    depot_x = analyzer.loc_dict[analyzer.depot_id]['x_km']
+    depot_y = analyzer.loc_dict[analyzer.depot_id]['y_km']
+
+    algorithms = ['NN', 'EDD', 'ALNS']
+    colors = plt.cm.tab10.colors  # Phân phối màu sắc theo hàm băm cơ số 10
+
+    for algo in algorithms:
+        data = solutions.get(algo)
+        if not data or 'routes' not in data:
+            continue
+            
+        fig_spatial, ax = plt.subplots(figsize=(10, 8))
+        ax.set_title(f'Ánh xạ Cấu trúc Hình học Quỹ đạo - Mô hình: {algo}', fontweight='bold', fontsize=15)
+        
+        # Khởi tạo vector đồ thị cho Kho trung tâm
+        ax.scatter(depot_x, depot_y, c='red', marker='s', s=150, edgecolor='black', label='DEPOT', zorder=5)
+        
+        routes = data['routes']
+        for day_str, route in routes.items():
+            day = int(day_str)
+            if not route: continue
+            
+            # Khởi tạo vector không gian với điểm đầu mút là Depot
+            x_coords = [depot_x]
+            y_coords = [depot_y]
+            
+            for node in route:
+                resolved_node = analyzer._resolve_node_id(node)
+                x_coords.append(analyzer.loc_dict[resolved_node]['x_km'])
+                y_coords.append(analyzer.loc_dict[resolved_node]['y_km'])
+                
+            # Hồi quy vector về Depot
+            x_coords.append(depot_x)
+            y_coords.append(depot_y)
+            
+            color = colors[(day - 1) % len(colors)]
+            
+            # Ánh xạ đường đi (Edges) và đỉnh (Vertices)
+            ax.plot(x_coords, y_coords, color=color, linewidth=1.5, alpha=0.7, label=f'Chu kỳ {day}')
+            ax.scatter(x_coords[1:-1], y_coords[1:-1], color=color, s=30, zorder=3)
+        
+        ax.set_xlabel('Hệ tọa độ X (km)')
+        ax.set_ylabel('Hệ tọa độ Y (km)')
+        ax.grid(True, linestyle='--', alpha=0.5)
+
+        # Thuật toán chuẩn hóa khung chú giải (Legend Deduplication)
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        # Đặt legend ở không gian ngoại vi bên phải nhằm bảo toàn tầm nhìn không gian
+        ax.legend(by_label.values(), by_label.keys(), loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.)
+
+        # Tối ưu hóa viền lề bảo toàn tỷ lệ co (Aspect Ratio)
+        plt.tight_layout()
+        filename = f'spatial_trajectory_{algo}.png'
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"[+] Đã kết xuất đồ thị vi phân không gian: {filename}")
+
 if __name__ == '__main__':
     main()
