@@ -1,44 +1,75 @@
-# MP-VRPTW: Tối ưu hóa Lập lịch Giao hàng Đa chu kỳ bằng ALNS
+# Hệ thống Tối ưu hóa Định tuyến Xe Đa chu kỳ (MP-TD-VRPTW)
+**Multi-Period Time-Dependent Vehicle Routing Problem with Time Windows**
 
-Dự án này triển khai hệ thống giải quyết **Bài toán Định tuyến Phương tiện Đa chu kỳ có Khung thời gian** (Multi-Period Vehicle Routing Problem with Time Windows - MP-VRPTW). Hệ thống sử dụng thuật toán Meta-heuristic **Tìm kiếm Lân cận Thích ứng Cỡ lớn** (Adaptive Large Neighborhood Search - ALNS) để tối ưu hóa không gian phân bổ đơn hàng trong chu kỳ một tuần làm việc.
+Dự án này triển khai một hệ thống Meta-heuristic dựa trên thuật toán Tìm kiếm Lân cận Lớn Thích ứng (ALNS - Adaptive Large Neighborhood Search) nhằm giải quyết bài toán định tuyến logistics phức tạp. Hệ thống tích hợp các yếu tố thực tiễn như Khung giờ giao hàng, Dịch chuyển thời hạn, và Động học vận tốc giao thông.
 
-## 1. Cơ sở Lý thuyết và Mô hình Toán học
+---
 
-Bài toán được mô hình hóa dưới dạng bài toán tối ưu hóa tổ hợp đa mục tiêu. Hàm mục tiêu $F(x)$ được thiết lập để cực tiểu hóa sự kết hợp tuyến tính của các biến trạng thái:
+## 1. Giới thiệu Bài toán (Problem Statement)
+Hệ thống được thiết kế để giải quyết bài toán **MP-TD-VRPTW**.
+* **Mục tiêu:** Điều phối một đội xe phục vụ tập hợp các đơn hàng trải dài qua nhiều chu kỳ (nhiều ngày) nhằm cực tiểu hóa tổng chi phí vận hành (khoảng cách, thời gian) và chi phí phạt (trễ giờ, dời lịch).
+* **Thử thách:** Quyết định dời một đơn hàng từ Thứ 2 sang Thứ 3 sẽ thay đổi toàn bộ quỹ đạo của cả hai ngày. Hơn nữa, vận tốc di chuyển không cố định mà thay đổi theo tình trạng giao thông thực tế.
 
-$$F(x) = W_d \cdot C_{distance} + W_w \cdot C_{wait} + P_{delay} + P_{unassigned} + P_{tw}$$
+## 2. Kiến trúc Hàm Mục tiêu (Objective Function)
+Hệ thống không tối ưu hóa các con số vô hướng mà tối ưu hóa **Chi phí Tài chính thực tế**. Chúng tôi thiết lập mỏ neo: **1 km di chuyển = 4.000 VNĐ = 1 Đơn vị Chi phí**.
 
-Trong đó:
-* **$C_{distance}$**: Tổng khoảng cách không gian (Euclid).
-* **$C_{wait}$**: Tổng thời gian chờ đợi (tĩnh) khi phương tiện tiếp cận nút khách hàng sớm hơn điểm cận dưới của khung thời gian.
-* **$P_{delay}$**: Hàm phạt tuyến tính đối với các cấu trúc bị dời chu kỳ giao hàng (trễ hẹn sang ngày hôm sau).
-* **$P_{unassigned}$**: Hệ số phạt tuyệt đối đối với các đơn hàng không được phân bổ vào mạng lưới.
-* **$P_{tw}$**: Hệ số phạt vi phạm ràng buộc khung thời gian cứng.
+Hàm hội tụ Cost tổng quát được định nghĩa như sau:
+$$F(S) = \sum (C_{dist} + C_{wait} + C_{delay} + C_{tw} + C_{overtime}) + M \cdot U$$
 
-## 2. Kiến trúc Hệ thống (Project Structure)
+* **Chi phí Khoảng cách ($C_{dist}$ - Trọng số 1.0):** Tổn hao nhiên liệu và khấu hao phương tiện.
+* **Chi phí Chờ đợi ($C_{wait}$ - Trọng số 0.3):** Hao phí quỹ lương khi tài xế nhàn rỗi chờ điểm giao mở cửa.
+* **Phạt Dời lịch ($C_{delay}$ - 100 đv/ngày):** Trừng phạt rủi ro lưu kho do dời lịch giao sang ngày sau.
+* **Phạt Vượt mốc ($C_{overtime}$ - 500 đv/phút):** Trừng phạt khi xe không thể hồi quy về Kho trước mốc giới hạn 24h.
+* **Phạt Rớt đơn ($M \cdot U$ - Trọng số 100,000):** Ràng buộc cứng (Hard Constraint), dập tắt mọi phương án bỏ sót khách hàng.
 
-Dự án được phân rã thành các phân hệ (modules) độc lập tuân thủ nguyên lý Đơn trách nhiệm (Single Responsibility Principle):
+### Cải tiến Đột phá: Hàm Phạt Thời gian Lũy tiến (Exponential Penalty)
+Để mô phỏng tâm lý khách hàng (trễ 15 phút có thể chấp nhận, trễ 2 tiếng lúc nửa đêm là thảm họa), hệ thống áp dụng hàm phạt cấp số mũ thay vì hàm tuyến tính:
+$$C_{tw} = C \cdot \left( e^{\alpha \cdot \Delta t} - 1 \right)$$
+*(Với $\alpha = 0.05$ và $C = 50$).*
+
+## 3. Mô hình Hóa Động học Giao thông (TD-VRP)
+Hệ thống loại bỏ hoàn toàn ma trận thời gian tĩnh. Thời gian di chuyển được tính bằng cơ chế **Tích phân từng phần (Piecewise Integration)** để bảo toàn tiên đề dòng chảy FIFO.
+
+Vận tốc biến thiên theo 4 pha trong ngày:
+1. `00:00 - 06:00`: Vận tốc cơ sở (50 km/h)
+2. `06:00 - 16:00`: Vận tốc chuẩn (40 km/h)
+3. `16:00 - 19:00`: **Giờ cao điểm** (30 km/h)
+4. `19:00 - 24:00`: Phục hồi trạng thái (50 km/h)
+
+*Cơ chế này ép thuật toán Meta-heuristic chủ động lảng tránh các tuyến đường dài trong khung giờ kẹt xe 16h-19h.*
+
+## 4. Kiến trúc Thuật toán (ALNS Engine)
+Quy trình tối ưu hóa vận hành qua 2 pha:
+
+### Pha 1: Baseline Heuristics (Khởi tạo cơ sở)
+* **Tham lam Khoảng cách (NN - Nearest Neighbor):** Tối ưu cực đoan về không gian nhưng gây rớt đơn hàng loạt.
+* **Tham lam Thời gian (EDD - Earliest Due Date):** Phục vụ 100% đơn nhưng quỹ đạo di chuyển hỗn loạn, chồng chéo. Hệ thống sử dụng nghiệm EDD làm điểm xuất phát.
+
+### Pha 2: Meta-heuristic (Tối ưu hóa Toàn cục)
+Động cơ ALNS liên tục phá hủy và tái tạo đồ thị:
+1. **Phá hủy (Destroy):** `Random Removal` và `Worst Removal` (bóc tách các đỉnh gây ra chi phí cận biên lớn nhất).
+2. **Tái tạo (Repair):** `Greedy Insertion`. Hệ thống sử dụng Vi phân Khoảng cách Euclid $\Delta D$ ($O(1)$) để tìm vị trí chèn tối ưu, giảm đáng kể thời gian tính toán so với việc sao chép toàn bộ không gian nghiệm.
+
+## 5. Cấu trúc Thư mục Mã Nguồn
 
 ```text
 delivery_optimization_project/
-├── data/
-│   ├── locations.csv          # Ma trận tọa độ không gian và nhu cầu
-│   └── time_windows.csv       # Ràng buộc thời gian đa chu kỳ
-├── src/
-│   ├── __init__.py
-│   ├── environment.py         # Tiền xử lý, chuẩn hóa không gian metric và thời gian
-│   ├── state.py               # Đặc tả không gian trạng thái DeliveryState
-│   ├── operators.py           # Toán tử Heuristic: Destroy (ngẫu nhiên/tồi nhất) và Repair (tham lam)
-│   ├── solver.py              # Động cơ ALNS tích hợp Simulated Annealing & Roulette Wheel
-│   ├── baselines.py           # Thuật toán sinh nghiệm cơ sở (Nearest Neighbor, Earliest Due Date)
-│   ├── evaluator.py           # Nội suy và định lượng các tham số thống kê (Benchmarking)
-│   └── visualizer.py          # Ánh xạ đồ thị topo đa chu kỳ lên mặt phẳng 2D
-├── main.py                    # Trình điều phối trung tâm (Entry  Point)
-└── README.md                  # Tài liệu đặc tả kỹ thuật
-```
-
-## 3. Tiền xử lý dữ liệu với `src/environment.py`
-Thực thi tập lệnh `src/environment.py` để khởi tạo quy trình đọc dữ liệu đầu vào và chuyển đổi chúng sang các cấu trúc dữ liệu cần thiết cho thuật toán.
-
-## 4. Thực thi hệ thống với `main.py`
-Khởi chạy `main.py` để bắt đầu # có thể chỉnh sửa số iterations để tăng/giảm độ chính xác, hội tụ.
+│
+├── data/                       # Chứa dữ liệu đầu vào và nghiệm đầu ra
+│   ├── locations.csv           # Tọa độ không gian
+│   ├── time_windows.csv        # Ma trận khung giờ dịch vụ
+│   ├── best_solution.json      # Nghiệm xuất ra từ ALNS (Vector quỹ đạo)
+│   └── detailed_timeline.csv   # Lịch trình giải mã chi tiết (Output)
+│
+├── src/                        # Chứa logic nghiệp vụ cốt lõi
+│   ├── state.py                # Không gian Trạng thái, TD-VRP, Exponential Penalty
+│   ├── environment.py          # Xây dựng ma trận Không gian/Thời gian
+│   ├── operators.py            # Toán tử Heuristic (Destroy/Repair)
+│   ├── solver.py               # Vòng lặp ALNS & Simulated Annealing
+│   ├── baselines.py            # Thuật toán khởi tạo NN & EDD
+│   ├── evaluator.py            # Đánh giá Benchmarking thống kê
+│   ├── visualizer.py           # Ánh xạ đồ thị
+│   ├── timeline_decoder.py     # Giải mã JSON thành Lịch trình (Timetable)
+│   └── io_manager.py           # Quản lý Serialization (JSON) an toàn cho NumPy
+│
+└── main.py                     # Entry point với cờ điều khiển (OPTIMIZE/LOAD)
