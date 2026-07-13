@@ -20,7 +20,7 @@ $$F(S) = \sum (C_{dist} + C_{wait} + C_{delay} + C_{tw} + C_{overtime}) + M \cdo
 * **Chi phí Chờ đợi ($C_{wait}$ - Trọng số 0.3):** Hao phí quỹ lương khi tài xế nhàn rỗi chờ điểm giao mở cửa.
 * **Phạt Dời lịch ($C_{delay}$ - 2000 đv/ngày):** Trừng phạt rủi ro lưu kho do dời lịch giao sang ngày sau.
 * **Phạt Vượt mốc ($C_{overtime}$ - 500 đv/phút):** Trừng phạt khi xe không thể hồi quy về Kho trước mốc giới hạn 24h.
-* **Phạt Rớt đơn ($M \cdot U$ - Trọng số 100,000):** Ràng buộc cứng (Hard Constraint), dập tắt mọi phương án bỏ sót khách hàng.
+* **Phạt Rớt đơn ($M \cdot U$ - Trọng số 1,000,000):** Ràng buộc cứng (Hard Constraint), dập tắt mọi phương án bỏ sót khách hàng.
 
 ### Cải tiến Đột phá: Hàm Phạt Thời gian Lũy tiến (Exponential Penalty)
 Để mô phỏng tâm lý khách hàng (trễ 15 phút có thể chấp nhận, trễ 2 tiếng lúc nửa đêm là thảm họa), hệ thống áp dụng hàm phạt cấp số mũ thay vì hàm tuyến tính:
