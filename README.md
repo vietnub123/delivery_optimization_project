@@ -55,21 +55,47 @@ Quy trình tối ưu hóa vận hành qua 2 pha:
 ```text
 delivery_optimization_project/
 │
-├── data/                       # Chứa dữ liệu đầu vào và nghiệm đầu ra
-│   ├── locations.csv           # Tọa độ không gian
-│   ├── time_windows.csv        # Ma trận khung giờ dịch vụ
-│   ├── best_solution.json      # Nghiệm xuất ra từ ALNS (Vector quỹ đạo)
-│   └── detailed_timeline.csv   # Lịch trình giải mã chi tiết (Output)
+├── main.py                   # Điểm truy cập hệ thống (Entry point) 
+├── compare.py                # Phân tích đối chứng (Benchmarking) và vẽ đường đi 
+├── README.md                 # Tài liệu đặc tả kiến trúc kỹ thuật và mô hình toán học của dự án
 │
-├── src/                        # Chứa logic nghiệp vụ cốt lõi
-│   ├── state.py                # Không gian Trạng thái, TD-VRP, Exponential Penalty
-│   ├── environment.py          # Xây dựng ma trận Không gian/Thời gian
-│   ├── operators.py            # Toán tử Heuristic (Destroy/Repair)
-│   ├── solver.py               # Vòng lặp ALNS & Simulated Annealing
-│   ├── baselines.py            # Thuật toán khởi tạo NN & EDD
-│   ├── evaluator.py            # Đánh giá Benchmarking thống kê
-│   ├── visualizer.py           # Ánh xạ đồ thị
-│   ├── timeline_decoder.py     # Giải mã JSON thành Lịch trình (Timetable)
-│   └── io_manager.py           # Quản lý Serialization (JSON) an toàn cho NumPy
+├── data/                     # Lưu trữ không gian dữ liệu vận hành 
+│   ├── locations.csv         # Ma trận tọa độ không gian (Euclidean) và tham số tải trọng của các đỉnh
+│   ├── time_windows.csv      # Ma trận giới hạn biên thời gian (Time Windows) đa chu kỳ
+│   ├── solution_alns.json    # Nghiệm tối ưu toàn cục sinh ra từ Meta-heuristic
+│   ├── solution_edd.json     # Nghiệm cơ sở của hàm tham lam thời gian (Earliest Due Date)
+│   └── solution_nn.json      # Nghiệm cơ sở của hàm tham lam không gian (Nearest Neighbor)
 │
-└── main.py                     # Entry point với cờ điều khiển (OPTIMIZE/LOAD)
+├── src/                      # Phân hệ mã nguồn cốt lõi (Core Business Logic)
+│   ├── __init__.py           # Khởi tạo định danh package module Python
+│   ├── baselines.py          # Thuật toán khởi tạo nghiệm cơ sở (Constructive Heuristics: NN, EDD)
+│   ├── environment.py        # Tiền xử lý môi trường: Thiết lập ma trận khoảng cách và giới hạn không gian
+│   ├── evaluator.py          # Thuật toán định lượng thống kê và đánh giá vi phân nghiệm đầu ra
+│   ├── io_manager.py         # Giao thức tuần tự hóa (Serialization) và quản lý luồng dữ liệu JSON/CSV
+│   ├── operators.py          # Toán tử Heuristic can thiệp đồ thị: Phá hủy (Destroy) và Tái tạo (Repair)
+│   ├── solver.py             # Động cơ vòng lặp Adaptive Large Neighborhood Search (ALNS)
+│   ├── state.py              # Định nghĩa Không gian Trạng thái, phương trình hội tụ F(S) và mô hình TD-VRP
+│   └── visualizer.py         # Phân hệ nội suy hệ tọa độ và ánh xạ trực quan hóa đồ thị hình học
+│
+└── tests/                    # Phân hệ lưu trữ kịch bản kiểm thử (Test Cases & Experiments)
+    ├── test3/                # Dữ liệu đường chạy 100 iters
+    │
+    └── test4/                # Dữ liệu đường chạy 1000 iters
+        ├── locations.csv
+        ├── time_windows.csv
+        ├── report.md         # Báo cáo kết xuất kết quả kiểm chuẩn định kỳ
+        ├── solution_alns.json
+        ├── solution_edd.json
+        └── solution_nn.json
+
+```
+## 6. Hướng dẫn chạy chương trình
+
+1. **Khởi tạo môi trường:**
+   Chạy `src/environment.py` để thực hiện tiền xử lý dữ liệu đầu vào và khởi tạo ma trận khoảng cách Euclid làm cơ sở dữ liệu.
+
+2. **Tối ưu hóa định tuyến:**
+   Chạy `main.py` để kích hoạt lõi thuật toán tối ưu ALNS và các baselines (NN, EDD). Chương trình nạp dữ liệu từ thư mục sản xuất `data/` và tự động xuất kết quả nghiệm dạng JSON ngược lại vào `data/`. Sau đó, tiến hành copy toàn bộ các file dữ liệu này vào thư mục test tương ứng (ví dụ: `tests/test4/`).
+
+3. **Kiểm chuẩn và vẽ đồ thị đối chứng:**
+   Chạy `compare.py` để giải mã các tệp nghiệm từ `tests/test4/`, chạy mô phỏng đo lường hiệu năng thực tế (Cost, Distance, Violations,...) và xuất ra các biểu đồ so sánh và 3 tệp quỹ đạo không gian.
